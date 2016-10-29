@@ -104,7 +104,7 @@ func (gim *globalIdentityManager) ValidateToken(token string) (bool, error) {
 	if !response.Success {
 		err = GlobalIdentityError(response.OperationReport)
 	}
-	return response.Success, err
+	return response.Success, nil
 }
 
 func (gim *globalIdentityManager) IsUserInRoles(userKey string, roles ...string) (bool, error) {
