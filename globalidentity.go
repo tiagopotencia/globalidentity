@@ -4,17 +4,17 @@ import (
 	"crypto/hmac"
 	"crypto/sha512"
 	"encoding/hex"
-	"net/http"
 	"fmt"
+	"net/http"
 )
 
 const (
-	contentJson = "application/json"
+	contentJson               = "application/json"
 	validateApplicationSuffix = "/api/authorization/validateapplication"
-	authenticateUserSuffix = "/api/authorization/authenticate"
-	isUserInRolesSuffix = "/api/authorization/isuserinroles"
-	validateTokenSuffix = "/api/authorization/validatetokenresponse"
-	renewTokenSuffix = "/api/authorization/renewtoken"
+	authenticateUserSuffix    = "/api/authorization/authenticate"
+	isUserInRolesSuffix       = "/api/authorization/isuserinroles"
+	validateTokenSuffix       = "/api/authorization/validatetoken"
+	renewTokenSuffix          = "/api/authorization/renewtoken"
 )
 
 type GlobalIdentityError []string
@@ -23,11 +23,10 @@ func (e GlobalIdentityError) Error() string {
 	return fmt.Sprintf("%#v", []string(e))
 }
 
-
 type GlobalIdentityManager interface {
-	AuthenticateUser(email string, password string, expirationInMinutes ... int) (string, error)
+	AuthenticateUser(email string, password string, expirationInMinutes ...int) (string, error)
 	ValidateToken(token string) (bool, error)
-	IsUserInRoles(userKey string, roles ... string) (bool, error)
+	IsUserInRoles(userKey string, roles ...string) (bool, error)
 	RenewToken(token string) (string, error)
 	ValidateApplication(clientApplicationKey string, clientSecretKey string, resources string) (bool, error)
 }
@@ -43,12 +42,12 @@ func New(applicationKey string, globalIdentityHost string) GlobalIdentityManager
 	}
 }
 
-func (gim *globalIdentityManager) AuthenticateUser(email string, password string, expirationInMinutes ... int) (string, error) {
+func (gim *globalIdentityManager) AuthenticateUser(email string, password string, expirationInMinutes ...int) (string, error) {
 	expirationInMinutes = append(expirationInMinutes, 15)
 	request := &authenticateUserRequest{
-		ApplicationKey: gim.applicationKey,
+		ApplicationKey:           gim.applicationKey,
 		TokenExpirationInMinutes: expirationInMinutes[0],
-		Email: email,
+		Email:    email,
 		Password: password,
 	}
 	json, err := toJson(request)
@@ -56,7 +55,7 @@ func (gim *globalIdentityManager) AuthenticateUser(email string, password string
 		return "", err
 	}
 
-	resp, err := http.Post(gim.globalIdentityHost + authenticateUserSuffix, contentJson, json)
+	resp, err := http.Post(gim.globalIdentityHost+authenticateUserSuffix, contentJson, json)
 	if err != nil {
 		return "", err
 	}
@@ -79,15 +78,15 @@ func (gim *globalIdentityManager) AuthenticateUser(email string, password string
 
 func (gim *globalIdentityManager) ValidateToken(token string) (bool, error) {
 	request := &validateTokenRequest{
-		ApplicationKey:gim.applicationKey,
-		Token: token,
+		ApplicationKey: gim.applicationKey,
+		Token:          token,
 	}
 	json, err := toJson(request)
 	if err != nil {
 		return false, err
 	}
 
-	resp, err := http.Post(gim.globalIdentityHost + validateTokenSuffix, contentJson, json)
+	resp, err := http.Post(gim.globalIdentityHost+validateTokenSuffix, contentJson, json)
 	if err != nil {
 		return false, err
 	}
@@ -108,10 +107,10 @@ func (gim *globalIdentityManager) ValidateToken(token string) (bool, error) {
 	return response.Success, err
 }
 
-func (gim *globalIdentityManager) IsUserInRoles(userKey string, roles ... string) (bool, error) {
+func (gim *globalIdentityManager) IsUserInRoles(userKey string, roles ...string) (bool, error) {
 	request := &isUserInHolesRequest{
-		ApplicationKey:gim.applicationKey,
-		UserKey: userKey,
+		ApplicationKey: gim.applicationKey,
+		UserKey:        userKey,
 		RoleCollection: roles,
 	}
 	json, err := toJson(request)
@@ -119,7 +118,7 @@ func (gim *globalIdentityManager) IsUserInRoles(userKey string, roles ... string
 		return false, err
 	}
 
-	resp, err := http.Post(gim.globalIdentityHost + isUserInRolesSuffix, contentJson, json)
+	resp, err := http.Post(gim.globalIdentityHost+isUserInRolesSuffix, contentJson, json)
 	if err != nil {
 		return false, err
 	}
@@ -142,15 +141,15 @@ func (gim *globalIdentityManager) IsUserInRoles(userKey string, roles ... string
 
 func (gim *globalIdentityManager) RenewToken(token string) (string, error) {
 	request := &renewTokenRequest{
-		ApplicationKey:gim.applicationKey,
-		Token: token,
+		ApplicationKey: gim.applicationKey,
+		Token:          token,
 	}
 	json, err := toJson(request)
 	if err != nil {
 		return "", err
 	}
 
-	resp, err := http.Post(gim.globalIdentityHost + renewTokenSuffix, contentJson, json)
+	resp, err := http.Post(gim.globalIdentityHost+renewTokenSuffix, contentJson, json)
 	if err != nil {
 		return "", err
 	}
@@ -179,18 +178,17 @@ func (gim *globalIdentityManager) ValidateApplication(clientApplicationKey strin
 	}
 	encryptedSecretKey := hex.EncodeToString(hmac512.Sum(nil))
 	request := &validateApplicationRequest{
-		ApplicationKey:gim.applicationKey,
+		ApplicationKey:       gim.applicationKey,
 		ClientApplicationKey: clientApplicationKey,
-		RawData: resources,
-		EncryptedData: encryptedSecretKey,
-
+		RawData:              resources,
+		EncryptedData:        encryptedSecretKey,
 	}
 	json, err := toJson(request)
 	if err != nil {
 		return false, err
 	}
 
-	resp, err := http.Post(gim.globalIdentityHost + validateApplicationSuffix, contentJson, json)
+	resp, err := http.Post(gim.globalIdentityHost+validateApplicationSuffix, contentJson, json)
 	if err != nil {
 		return false, err
 	}
